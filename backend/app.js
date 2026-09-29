@@ -4,7 +4,9 @@ import { Server } from "socket.io";
 import mongoose from "mongoose";
 import { connectToSocket } from "./src/controllers/socketManager.js";
 import cors from "cors";
+import dotenv from "dotenv";
 import  userRoutes from "./src/routes/users.route.js";
+dotenv.config(); 
 
 const app=express();
 const server=createServer(app);
@@ -21,11 +23,12 @@ app.get("/home",(req,res)=>{
     return res.json({"hello":"world"});
 });
 
+const port=app.get("port");
 const start=async ()=>{
-    const connectionDb=await mongoose.connect("mongodb+srv://gayatri-kulkarni:gayatri2411@cluster0.8efd2q0.mongodb.net/?appName=Cluster0");
+    const connectionDb=await mongoose.connect(process.env.DATABASE_URL);
     console.log(`MONGO connected db host ${connectionDb.connection.host}`);
-    server.listen(app.get("port"),()=>{
-        console.log("listening on port 8000");
+    server.listen(port,()=>{
+        console.log(`listening on port ${port}`);
     });
 };
 
