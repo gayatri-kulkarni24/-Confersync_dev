@@ -1,0 +1,69 @@
+.landingPageContainer{
+        width: 100vw;
+        height: 100vh;
+        background: url("/public/background.png");
+        background-repeat: no-repeat;
+        background-size: cover;
+        color: white;
+}
+.landingPageContainer nav{
+        padding-inline:1.2rem;
+        padding-block: 1.6rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-shadow:  1px 1px 0 #cccccc, /* First layer, slightly darker */
+        2px 2px 0 #7c1859;
+        font-size: 1.2rem;
+}
+.landingPageContainer nav h2{
+        font-size: 1.8rem;
+        font-weight: 700;
+        font-family: Rockwell;
+        color:white ;
+          text-shadow:  1px 1px 0 #cccccc, /* First layer, slightly darker */
+        2px 2px 0 #5baac2, /* Second layer, even darker */
+        3px 3px 0 #cd0808;
+}
+.landingPageContainer nav .navList{
+        display: flex;
+        gap: 1.6rem;
+        cursor: pointer;
+}
+.landingMainContainer{
+        display: flex;
+        justify-content: space-between;
+        padding-inline: 3rem;
+        height: 80vh;
+        align-items: center;
+}
+.landingMainContainer > div:nth-child(1){
+        font-size: 2.2rem;
+        font-family:Georgia;
+        text-shadow:  1px 1px 0 #6c7683,
+        2px 2px 0 hsl(35, 92%, 46%); /* First layer, slightly darker */
+
+}
+.landingMainContainer > div:nth-child(1) p{
+        margin-top: 1rem;
+        font-family: Rockwell;
+        color: #DFD0B8;
+        text-shadow:  1px 1px 0 #3677cd;
+}
+.landingMainContainer > div:nth-child(1) div[role='button']{
+        background: #d97500;
+        width: fit-content;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-top: 1.6rem;
+}
+.landingMainContainer > div:nth-child(1) div[role='button'] a{
+        text-decoration: none;
+        color: white;
+        font-size: 1.8rem;
+
+}
+.landingMainContainer > div:nth-child(2) img{
+        height: 70vh;
+        width: auto;
+}
