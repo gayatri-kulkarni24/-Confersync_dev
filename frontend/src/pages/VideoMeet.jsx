@@ -1,12 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { connect } from 'socket.io-client';
 import "../styles/VideoMeet.css";
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
-import { connect } from 'socket.io-client';
 
 
-const server_url="http://localhost:8000";
+
+const server_url="http://localhost:3000";
 
 var connections={};
 
@@ -85,7 +86,70 @@ function VideoMeet() {
     },[]);
 
     let getUserMediaSuccess=(stream)=>{
+        try {
+            window.localStream.getTracks().forEach(track=>track.stop());
+        } catch (error){
+            console.log(error);
+        } 
 
+        window.localStream=stream;
+        localVideoRef.current.srcObject=stream;
+
+        for(let id in connections){
+            if(id===socketIdRef.current) continue;
+
+            connections[id].addStream(window.localStream);
+
+            connections[id].createOffer().then((description)=>{
+                connections[id].setLocalDescription(description)
+                .then(()=>{
+                    socketIdRef.current.emit("signal",id,JSON.stringify({"sdp":connections[id].localDescription}));
+                })
+                .catch((e)=>console.log(e));
+            })
+        }
+
+        stream.getTracks().forEach(track=>track.onended=()=>{
+            setVideo(false);
+            setAudio(false);
+
+            try {
+                let tracks=localVideoRef.current.srcObject.getTracks();
+                tracks.forEach(track=>track.stop());
+            } catch (error) {console.log(error);}
+
+            let blackSilence=(...args)=>new MediaStream([black(...args),silence()]);
+            window.localStream=blackSilence();
+            localVideoRef.current.srcObject=window.localStream;
+
+            for(let id in connections){
+                connections[id].addStream(window.localStream);
+                connections[id].createOffer().then((description)=>{
+                    connections[id].setLocalDescription(description)
+                    .then(()=>{
+                        socketRef.current.emit("signal",id,JSON.stringify({"sdp":connections[id].localDescription}))
+                    }).catch((e)=>console.log(e));
+                })
+            }
+        })
+    }
+
+    let silence=()=>{
+        let ctx=new AudioContext();
+        let oscillator=ctx.createOscillator();
+
+        let dst=oscillator.connect(ctx.createMediaStreamDestination());
+
+        oscillator.start();
+        ctx.resume();
+        return Object.assign(dst.stream.getAudioTracks()[0],{enabled:false});
+    }
+
+    let black=({width=640,height=480}={})=>{
+        let canvas =Object.assign(document.createElement("canvas"),{width,height});
+        canvas.getContext('2d').fillRect(0,0,width,height);
+        let stream=canvas.captureStream();
+        return Object.assign(stream.getVideoTracks()[0],{enabled:false});
     }
 
     let getUserMedia=()=>{
@@ -110,26 +174,24 @@ function VideoMeet() {
         }
     },[audio,video]);
 
-     let gotMessageFromServer = (fromId, message) => {
-        // var signal = JSON.parse(message)
+    let gotMessageFromServer = (fromId, message) => {
+        var signal=JSON.parse(message);
+        
+        if(fromId!==socketIdRef.current){
+            connections[fromId].setRemoteDescription(new RTCSessionDescription(signal.sdp)).then(()=>{
+                if(signal.sdp.type==="offer"){
+                    connections[fromId].createAnswer().then((description)=>{
+                        connections[fromId].setLocalDescription(description).then(()=>{
+                            socketIdRef.current.emit("signal",fromId,JSON.stringify({"sdp":connections[fromId].localDescription}))
+                        }).catch((e)=>console.log(e));
+                    }).catch((e)=>console.log(e));
+                }
+            }).catch((e)=>console.log(e));
+        }
 
-        // if (fromId !== socketIdRef.current) {
-        //     if (signal.sdp) {
-        //         connections[fromId].setRemoteDescription(new RTCSessionDescription(signal.sdp)).then(() => {
-        //             if (signal.sdp.type === 'offer') {
-        //                 connections[fromId].createAnswer().then((description) => {
-        //                     connections[fromId].setLocalDescription(description).then(() => {
-        //                         socketRef.current.emit('signal', fromId, JSON.stringify({ 'sdp': connections[fromId].localDescription }))
-        //                     }).catch(e => console.log(e))
-        //                 }).catch(e => console.log(e))
-        //             }
-        //         }).catch(e => console.log(e))
-        //     }
-
-        //     if (signal.ice) {
-        //         connections[fromId].addIceCandidate(new RTCIceCandidate(signal.ice)).catch(e => console.log(e))
-        //     }
-        // }
+        if(signal.ice){
+            connections[fromId].addIceCandidate(new RTCIceCandidate(signal.ice)).catch((e)=>console.log(e));
+        }
     }
 
     let addMessage=()=>{
@@ -192,6 +254,9 @@ function VideoMeet() {
                         connections[socketListId].addStream(window.localStream);
                     }else{
                         //blacksilence
+                        let blackSilence=(...args)=>new MediaStream([black(...args),silence()]);
+                        window.localStream=blackSilence();
+                        connections[socketListId].addStream(window.localStream);
                     }
 
                 })
@@ -234,9 +299,19 @@ function VideoMeet() {
                  <TextField id="outlined-basic" label="Username" value={username} onChange={e=>setUsername(e.target.value)} variant="outlined" />
                 <Button variant="contained" onClick={connect}>Connect</Button>
                 <div>
-                    <video ref={localVideoRef} autoPlay muted></video>
+                    <video ref={localVideoRef} autoPlay muted style={{ width: '100%', maxWidth: '400px', borderRadius: '8px' }}></video>
                 </div>
-            </div> : <></> 
+            </div> : <>
+                <video ref={localVideoRef} autoPlay muted></video>
+
+                {
+                    videos.map((video)=>{
+                        <div key={video.socketId}>
+
+                        </div>
+                    })
+                }
+            </> 
             
         }
         </div>
