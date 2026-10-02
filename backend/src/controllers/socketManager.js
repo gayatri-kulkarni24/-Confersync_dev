@@ -1,6 +1,7 @@
+//socketManager.js
 //import { connection, connections} from "mongoose";
 import { Server, Socket } from "socket.io";
-
+// 
 let connections = {}
 let messages = {}
 let timeOnline = {}
@@ -73,7 +74,7 @@ export const connectToSocket=(server)=>{
             if(v[a]===socket.id){
                 key=k;
                 for (let a = 0; a < connections[key].length; ++a) 
-                    io.to(connections[key][a].emit('user-left',socket.id));
+                    io.to(connections[key][a]).emit('user-left',socket.id);
                 }
                 var index=connections[key].indexOf(socket.id);
                 connections[key].splice(index,1);
@@ -89,6 +90,6 @@ export const connectToSocket=(server)=>{
  return io;
 };
 
-   
+
 
 
