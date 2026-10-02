@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { connect } from 'socket.io-client';
+// import { connect } from 'socket.io-client';
+import io from "socket.io-client";
 import "../styles/VideoMeet.css";
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
@@ -7,7 +8,7 @@ import Button from '@mui/material/Button';
 
 
 
-const server_url="http://localhost:3000";
+const server_url="http://localhost:8000";
 
 var connections={};
 
@@ -200,7 +201,7 @@ function VideoMeet() {
 
 
     let connectToSocketServer=()=>{
-        socketRef.current=connect(server_url,{secure:false});
+        socketRef.current=io.connect(server_url,{secure:false});
         socketRef.current.on('signal',gotMessageFromServer);
         socketRef.current.on("connect",()=>{
             socketRef.current.emit("join-call",window.location.href);
@@ -289,6 +290,10 @@ function VideoMeet() {
         connectToSocketServer();
     }
 
+     let connect = () => {
+        setAskForUsername(false);
+        getMedia();
+    }
 
 
     return ( 

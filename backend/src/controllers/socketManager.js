@@ -1,8 +1,14 @@
 //import { connection, connections} from "mongoose";
 import { Server, Socket } from "socket.io";
-import pkg from 'mongoose';
+
+let connections = {}
+let messages = {}
+let timeOnline = {}
+
+// import pkg from 'mongoose';
 import { json } from "express";
-const { connection, connections} = pkg;
+// const { connection, connections} = pkg;
+
 export const connectToSocket=(server)=>{
 
     const io=new Server(server,{

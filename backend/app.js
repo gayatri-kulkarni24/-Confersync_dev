@@ -19,10 +19,10 @@ app.use(express.urlencoded({limit:"40kb",extended:true}));
 
 app.use("/api/v1/users",userRoutes);
 
-app.get("/home",(req,res)=>{
-    return res.json({"hello":"world"});
-});
-
+// app.get("/home",(req,res)=>{
+//     return res.json({"hello":"world"});
+// });
+                                                                                                                                                                                                                                                                            
 const port=app.get("port");
 const start=async ()=>{
     const connectionDb=await mongoose.connect(process.env.DATABASE_URL);
