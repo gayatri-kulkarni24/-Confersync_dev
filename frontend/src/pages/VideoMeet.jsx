@@ -1,10 +1,20 @@
+//videoMeet.jsx
 import React, { useEffect, useRef, useState } from 'react';
 // import { connect } from 'socket.io-client';
 import io from "socket.io-client";
 import "../styles/VideoMeet.css";
 import Box from '@mui/material/Box';
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
+import { Badge, IconButton, TextField } from '@mui/material';
+import { Button } from '@mui/material';
+// import TextField from '@mui/material/TextField';
+import VideocamIcon from '@mui/icons-material/Videocam';
+import VideocamOffIcon from '@mui/icons-material/VideocamOff';
+import CallEndIcon from '@mui/icons-material/CallEnd'
+import MicIcon from '@mui/icons-material/Mic'
+import MicOffIcon from '@mui/icons-material/MicOff'
+import ScreenShareIcon from '@mui/icons-material/ScreenShare';
+import StopScreenShareIcon from '@mui/icons-material/StopScreenShare'
+import ChatIcon from '@mui/icons-material/Chat'
 import styles from "../styles/videoComponent.module.css"; 
 
 
@@ -305,7 +315,14 @@ function VideoMeet() {
         getMedia();
     }
 
-
+    let handleVideo = () => {
+        setVideo(!video);
+        // getUserMedia();
+    }
+     let handleAudio = () => {
+        setAudio(!audio)
+        // getUserMedia();
+    }
     return ( 
         <div>
             {askForUsername===true ? 
@@ -319,11 +336,35 @@ function VideoMeet() {
             </div> : 
             
             <div className={styles.meetVideoContainer}>
-                <video className='meetUserVideo' ref={localVideoRef} autoPlay muted></video>
+                <div className={styles.buttonContainers}>
+                    <IconButton onClick={handleVideo} style={{ color: "white" }}>
+                        {(video === true) ? <VideocamIcon /> : <VideocamOffIcon />}
+                    </IconButton>
+                     <IconButton style={{ color: "red" }}>
+                            <CallEndIcon  />
+                        </IconButton>
+                    <IconButton onClick={handleAudio}  style={{ color: "white" }}>
+                            {audio === true ? <MicIcon /> : <MicOffIcon />}
+                    </IconButton>
+                    
+                    {screenAvailable === true ?
+                        <IconButton style={{ color: "white" }}>
+                            {screen === true ? <ScreenShareIcon /> : <StopScreenShareIcon />}
+                        </IconButton> : <></>
+                    }
+                    <Badge badgeContent={newMessages} max={999} color='secondary'>
+                            <IconButton onClick={() => setModal(!showModal)} style={{ color: "white" }}>
+                                <ChatIcon />                        </IconButton>
+                    </Badge>
 
+
+
+                </div>
+                <video className={styles.meetUserVideo} ref={localVideoRef} autoPlay muted></video>
+                <div className={styles.conferenceView}>
                 {
                     videos.map((video)=>{
-                        <div key={video.socketId}>
+                        <div className={styles.conferenceView} key={video.socketId}>
                             <video data-socket={video.socketId}
                                     ref={ref => {
                                         if (ref && video.stream) {
@@ -336,6 +377,7 @@ function VideoMeet() {
                         </div>
                     })
                 }
+                </div>
             </div>
             
         }
