@@ -33,7 +33,8 @@ function VideoMeet() {
 
     let socketRef=useRef();
     let socketIdRef=useRef();
-    let localVideoRef=useRef();
+
+    let localVideoref=useRef();
     
     let [videoAvailable,setVideoAvailable]=useState(true);
     let [audioAvailable,setAudioAvailable]=useState(true);
@@ -52,6 +53,7 @@ function VideoMeet() {
 
     const videoRef=useRef([]);
     let [videos,setVideos]=useState([]);
+
 
     const getPermissions=async()=>{
         try {
@@ -87,8 +89,8 @@ function VideoMeet() {
 
                 if(userMediaStream){
                     window.localStream=userMediaStream;
-                    if(localVideoRef.current){
-                        localVideoRef.current.srcObject=userMediaStream;
+                    if(localVideoref.current){
+                        localVideoref.current.srcObject=userMediaStream;
                     }
                 }
             }
@@ -110,7 +112,7 @@ function VideoMeet() {
         } 
 
         window.localStream=stream;
-        localVideoRef.current.srcObject=stream;
+        localVideoref.current.srcObject=stream;
 
         for(let id in connections){
             if(id===socketIdRef.current) continue;
@@ -132,13 +134,13 @@ function VideoMeet() {
             setAudio(false);
 
             try {
-                let tracks=localVideoRef.current.srcObject.getTracks();
+                let tracks=localVideoref.current.srcObject.getTracks();
                 tracks.forEach(track=>track.stop());
             } catch (error) {console.log(error);}
 
             let blackSilence=(...args)=>new MediaStream([black(...args),silence()]);
             window.localStream=blackSilence();
-            localVideoRef.current.srcObject=window.localStream;
+            localVideoref.current.srcObject=window.localStream;
 
             for(let id in connections){
                 connections[id].addStream(window.localStream);
@@ -178,7 +180,7 @@ function VideoMeet() {
             .catch((e)=>console.log(e));
         }else{
             try {
-                let tracks=localVideoRef.current.srcObject.getTracks();
+                let tracks=localVideoref.current.srcObject.getTracks();
                 tracks.forEach(track=>track.stop())
             } catch (error) {
                 
@@ -323,6 +325,68 @@ function VideoMeet() {
         setAudio(!audio)
         // getUserMedia();
     }
+
+    let getDislayMediaSuccess = (stream) => {
+        console.log("HERE")
+        try {
+            window.localStream.getTracks().forEach(track => track.stop())
+        } catch (e) { console.log(e) }
+
+        window.localStream = stream;
+        localVideoref.current.srcObject = stream;
+
+        for (let id in connections) {
+            if (id === socketIdRef.current) continue
+
+            connections[id].addStream(window.localStream)
+
+            connections[id].createOffer().then((description) => {
+                connections[id].setLocalDescription(description)
+                    .then(() => {
+                        socketRef.current.emit('signal', id, JSON.stringify({ 'sdp': connections[id].localDescription }))
+                    })
+                    .catch(e => console.log(e))
+            })
+        }
+
+        stream.getTracks().forEach(track => track.onended = () => {
+            setScreen(false)
+
+            try {
+                let tracks = localVideoref.current.srcObject.getTracks()
+                tracks.forEach(track => track.stop())
+            } catch (e) { console.log(e) }
+
+            let blackSilence = (...args) => new MediaStream([black(...args), silence()])
+            window.localStream = blackSilence()
+            localVideoref.current.srcObject = window.localStream
+
+            getUserMedia()
+        })
+    }
+
+    let getDislayMedia = () => {
+        if (screen) {
+            if (navigator.mediaDevices.getDisplayMedia) {
+                navigator.mediaDevices.getDisplayMedia({ video: true, audio: true })
+                    .then(getDislayMediaSuccess)
+                    .then((stream) => { })
+                    .catch((e) => console.log(e))
+            }
+        }
+    }
+
+
+    useEffect(() => {
+        if (screen !== undefined) {
+            getDislayMedia();
+        }
+    }, [screen]);
+
+    let handleScreen = () => {
+        setScreen(!screen);
+    }
+
     return ( 
         <div>
             {askForUsername===true ? 
@@ -331,11 +395,15 @@ function VideoMeet() {
                  <TextField id="outlined-basic" label="Username" value={username} onChange={e=>setUsername(e.target.value)} variant="outlined" />
                 <Button variant="contained" onClick={connect}>Connect</Button>
                 <div>
-                    <video ref={localVideoRef} autoPlay muted style={{ width: '100%', maxWidth: '400px', borderRadius: '8px' }}></video>
+                    <video ref={localVideoref} autoPlay muted style={{ width: '100%', maxWidth: '400px', borderRadius: '8px' }}></video>
                 </div>
             </div> : 
             
             <div className={styles.meetVideoContainer}>
+                {showModal ? <div className={styles.chatRoom}>
+                    <h1>Chat</h1>
+                </div>: <></>}
+                
                 <div className={styles.buttonContainers}>
                     <IconButton onClick={handleVideo} style={{ color: "white" }}>
                         {(video === true) ? <VideocamIcon /> : <VideocamOffIcon />}
@@ -348,7 +416,7 @@ function VideoMeet() {
                     </IconButton>
                     
                     {screenAvailable === true ?
-                        <IconButton style={{ color: "white" }}>
+                        <IconButton onClick={handleScreen} style={{ color: "white" }}>
                             {screen === true ? <ScreenShareIcon /> : <StopScreenShareIcon />}
                         </IconButton> : <></>
                     }
@@ -360,7 +428,7 @@ function VideoMeet() {
 
 
                 </div>
-                <video className={styles.meetUserVideo} ref={localVideoRef} autoPlay muted></video>
+                <video className={styles.meetUserVideo} ref={localVideoref} autoPlay muted></video>
                 <div className={styles.conferenceView}>
                 {
                     videos.map((video)=>{
