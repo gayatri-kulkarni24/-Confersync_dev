@@ -408,8 +408,8 @@ function VideoMeet() {
             let tracks = localVideoref.current.srcObject.getTracks()
             tracks.forEach(track => track.stop())
         } catch (e) { }
-        window.location.href = "/"
-        // routeTo("/home");
+        // window.location.href = "/"
+        routeTo("/home");
     }
     return ( 
         <div>
