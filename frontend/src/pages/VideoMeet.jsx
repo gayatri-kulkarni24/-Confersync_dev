@@ -16,6 +16,7 @@ import ScreenShareIcon from '@mui/icons-material/ScreenShare';
 import StopScreenShareIcon from '@mui/icons-material/StopScreenShare'
 import ChatIcon from '@mui/icons-material/Chat'
 import styles from "../styles/videoComponent.module.css"; 
+import { useNavigate } from 'react-router-dom';
 
 
 const server_url="http://localhost:8000";
@@ -213,9 +214,15 @@ function VideoMeet() {
         }
     }
 
-    let addMessage=()=>{
-
-    }
+    const addMessage = (data, sender, socketIdSender) => {
+        setMessages((prevMessages) => [
+            ...prevMessages,
+            { sender: sender, data: data }
+        ]);
+        if (socketIdSender !== socketIdRef.current) {
+            setNewMessages((prevNewMessages) => prevNewMessages + 1);
+        }
+    };
 
 
     let connectToSocketServer=()=>{
@@ -312,6 +319,8 @@ function VideoMeet() {
         connectToSocketServer();
     }
 
+    let routeTo=useNavigate();
+
      let connect = () => {
         setAskForUsername(false);
         getMedia();
@@ -387,6 +396,21 @@ function VideoMeet() {
         setScreen(!screen);
     }
 
+      let sendMessage = () => {
+        console.log(socketRef.current);
+        socketRef.current.emit('chat-message', message, username)
+        setMessage("");
+
+        // this.setState({ message: "", sender: username })
+    }
+    let handleEndCall = () => {
+        try {
+            let tracks = localVideoref.current.srcObject.getTracks()
+            tracks.forEach(track => track.stop())
+        } catch (e) { }
+        window.location.href = "/"
+        // routeTo("/home");
+    }
     return ( 
         <div>
             {askForUsername===true ? 
@@ -401,28 +425,48 @@ function VideoMeet() {
             
             <div className={styles.meetVideoContainer}>
                 {showModal ? <div className={styles.chatRoom}>
-                    <h1>Chat</h1>
+
+                    <div className={styles.chatContainer}>
+                        <h1>Chat</h1>
+                        <div className={styles.chattingDisplay}>
+                            {messages.length !== 0 ? messages.map((item, index) => {
+
+                                    console.log(messages)
+                                    return (
+                                        <div style={{ marginBottom: "20px" }} key={index}>
+                                            <p style={{ fontWeight: "bold" }}>{item.sender}</p>
+                                            <p>{item.data}</p>
+                                        </div>
+                                    )
+                                }) : <p>No Messages Yet</p>}
+                        </div>
+                         <div className={styles.chattingArea}>
+                                <TextField value={message} onChange={(e) => setMessage(e.target.value)} id="outlined-basic" label="Enter Your chat" variant="outlined" />
+                                <Button variant='contained' onClick={sendMessage}>Send</Button>
+                        </div>   
+                    </div>
                 </div>: <></>}
                 
                 <div className={styles.buttonContainers}>
                     <IconButton onClick={handleVideo} style={{ color: "white" }}>
                         {(video === true) ? <VideocamIcon /> : <VideocamOffIcon />}
                     </IconButton>
-                     <IconButton style={{ color: "red" }}>
+                     <IconButton onClick={handleEndCall} style={{ color: "red" }}>
                             <CallEndIcon  />
                         </IconButton>
                     <IconButton onClick={handleAudio}  style={{ color: "white" }}>
                             {audio === true ? <MicIcon /> : <MicOffIcon />}
                     </IconButton>
                     
-                    {screenAvailable === true ?
+
                         <IconButton onClick={handleScreen} style={{ color: "white" }}>
                             {screen === true ? <ScreenShareIcon /> : <StopScreenShareIcon />}
                         </IconButton> : <></>
-                    }
+
                     <Badge badgeContent={newMessages} max={999} color='secondary'>
                             <IconButton onClick={() => setModal(!showModal)} style={{ color: "white" }}>
-                                <ChatIcon />                        </IconButton>
+                                <ChatIcon />                        
+                            </IconButton>
                     </Badge>
 
 

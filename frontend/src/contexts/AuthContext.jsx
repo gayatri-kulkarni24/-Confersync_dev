@@ -36,7 +36,9 @@ export const AuthProvider=({children})=>{
             });
             if(request.status===httpStatus.OK){
                 localStorage.setItem("token",request.data.token);
-                router("/home");
+                const userId = request.data.token; 
+                router(`/${userId}`); 
+                // router("/home");
             }
         } catch (error) {
             throw error;
