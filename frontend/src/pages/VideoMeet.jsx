@@ -419,7 +419,7 @@ function VideoMeet() {
                  <TextField id="outlined-basic" label="Username" value={username} onChange={e=>setUsername(e.target.value)} variant="outlined" />
                 <Button variant="contained" onClick={connect}>Connect</Button>
                 <div>
-                    <video ref={localVideoref} autoPlay muted style={{ width: '100%', maxWidth: '400px', borderRadius: '8px' }}></video>
+                    <video ref={localVideoref} autoPlay muted style={{ width: '100%', maxWidth: '400px', borderRadius: '8px',border:'2px white' }}></video>
                 </div>
             </div> : 
             
